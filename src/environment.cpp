@@ -10,7 +10,6 @@
 
 std::vector<Car> initHighway(bool renderScene, pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
-
     Car egoCar( Vect3(0,0,0), Vect3(4,2,2), Color(0,1,0), "egoCar");
     Car car1( Vect3(15,0,0), Vect3(4,2,2), Color(0,0,1), "car1");
     Car car2( Vect3(8,-4,0), Vect3(4,2,2), Color(0,0,1), "car2");	
@@ -46,18 +45,33 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr& viewer)
     std::vector<Car> cars = initHighway(renderScene, viewer);
     
     // TODO:: Create lidar sensor 
-
+    auto myLidarSensor = new Lidar(cars,0.0);
+    //renderRays(viewer,myLidarSensor->position,myLidarSensor->scan());
+    pcl::PointCloud<pcl::PointXYZ>::Ptr inputCloud = myLidarSensor->scan();
+    renderPointCloud(viewer,inputCloud,"test",Color(0,0.5,0));
     // TODO:: Create point processor
-  
+    auto myProcessPointClouds= new ProcessPointClouds<pcl::PointXYZ>();
+    std::pair<pcl::PointCloud<pcl::PointXYZ>::Ptr,  pcl::PointCloud<pcl::PointXYZ>::Ptr> segResult = myProcessPointClouds->SegmentPlane(inputCloud,1000,0.2);
+    renderPointCloud(viewer,segResult.first,"obstacle",Color(1,0,0));
+    renderPointCloud(viewer,segResult.second,"plane",Color(0,1,0));
+
+    std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> cloudClusters = myProcessPointClouds->Clustering(segResult.first, 1.0, 3, 30);
+    int clusterId = 0;
+    std::vector<Color> colors = {Color(1, 0, 0), Color(1, 1, 0), Color(0, 0, 1)};
+    for (pcl::PointCloud<pcl::PointXYZ>::Ptr cluster : cloudClusters)
+    {
+        std::cout << "cluster size ";
+        myProcessPointClouds->numPoints(cluster);
+        renderPointCloud(viewer, cluster, "obstCloud" + std::to_string(clusterId), colors[clusterId%colors.size()]);
+        ++clusterId;
+    }
 }
 
 
-//setAngle: SWITCH CAMERA ANGLE {XY, TopDown, Side, FPS}
+//setAngle: SWITCH CAMERA ANGLE {XY, TopDown, Side, FPS}();
 void initCamera(CameraAngle setAngle, pcl::visualization::PCLVisualizer::Ptr& viewer)
 {
-
     viewer->setBackgroundColor (0, 0, 0);
-    
     // set camera position and angle
     viewer->initCameraParameters();
     // distance away in meters
