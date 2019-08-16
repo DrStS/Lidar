@@ -19,6 +19,9 @@
 #include <chrono>
 #include "render/box.h"
 
+
+class KdTree;
+
 template<typename PointT>
 class ProcessPointClouds {
 public:
@@ -39,8 +42,10 @@ public:
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> SegmentPlaneOwn(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold);
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize);
+    
+    void clusterRecursive(int index, typename pcl::PointCloud<PointT>::Ptr cloud, typename pcl::PointCloud<PointT>::Ptr cloudCluster, std::vector<bool> &processed, KdTree *tree, float distanceTol);
 
-    std::vector<typename pcl::PointCloud<PointT>::Ptr> ClusteringOwn(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize);
+    std::vector<typename pcl::PointCloud<PointT>::Ptr> ClusteringOwn(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance);
 
     Box BoundingBox(typename pcl::PointCloud<PointT>::Ptr cluster);
 

@@ -204,40 +204,56 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
 
     return clusters;
 }
+template <typename PointT>
+void ProcessPointClouds<PointT>::clusterRecursive(int index, typename pcl::PointCloud<PointT>::Ptr cloud, typename pcl::PointCloud<PointT>::Ptr cloudCluster, std::vector<bool> &processed, KdTree *tree, float distanceTol)
+{
+	processed[index] = true;
+    std::vector<float> target;
+    target[0]=cloud->points[index].x;
+    target[1]=cloud->points[index].y;
+    target[2]=cloud->points[index].z;
+
+    cloudCluster->points.push_back(pcl::PointXYZ(target[0],target[1],target[2]));
+	std::vector<int> nnPointsIndex = tree->search(target, distanceTol);
+
+	for (int id : nnPointsIndex)
+	{
+		if (!processed[id])
+			clusterRecursive(id, cloud, cloudCluster, processed, tree, distanceTol);
+	}
+}
+
 
 template <typename PointT>
-std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::ClusteringOwn(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
+std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::ClusteringOwn(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance)
 {
     // Time clustering process
     auto startTime = std::chrono::steady_clock::now();
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
     // Create own KD Tree
     KdTree *ThreeDtree = new KdTree;
-
-    // Creating the KdTree object for the search method of the extraction
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
-    tree->setInputCloud(cloud);
-
-    std::vector<pcl::PointIndices> cluster_indices;
-    pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    ec.setClusterTolerance(clusterTolerance); // 2cm
-    ec.setMinClusterSize(minSize);
-    ec.setMaxClusterSize(maxSize);
-    ec.setSearchMethod(tree);
-    ec.setInputCloud(cloud);
-    ec.extract(cluster_indices);
-
-    for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin(); it != cluster_indices.end(); ++it)
-    {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_cluster(new pcl::PointCloud<pcl::PointXYZ>);
-        for (std::vector<int>::const_iterator pit = it->indices.begin(); pit != it->indices.end(); ++pit)
-            cloud_cluster->points.push_back(cloud->points[*pit]); //*
-        cloud_cluster->width = cloud_cluster->points.size();
-        cloud_cluster->height = 1;
-        cloud_cluster->is_dense = true;
-        clusters.push_back(cloud_cluster);
+    for (int i = 0; i < cloud->points.size(); i++){
+        std::vector<float> target;
+        target[0]=cloud->points[i].x;
+        target[1]=cloud->points[i].y;
+        target[2]=cloud->points[i].z;
+        std::cout << "DEBUG1 " << i << std::endl;
+        ThreeDtree->insert(target, i);
+        std::cout << "DEBUG2 " << i << std::endl;
     }
+		
 
+	std::vector<bool> processed(cloud->points.size(), false);
+
+	for (int i; i < cloud->points.size(); i++)
+	{
+		if (!processed[i])
+		{
+			pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCluster(new pcl::PointCloud<pcl::PointXYZ>());
+			clusterRecursive(i, cloud, cloudCluster, processed, ThreeDtree, clusterTolerance);
+			clusters.push_back(cloudCluster);
+		}
+	}
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters.size() << " clusters" << std::endl;
