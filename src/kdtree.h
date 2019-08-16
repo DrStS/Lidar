@@ -1,7 +1,8 @@
-/* \author Aaron Brown */
-// Quiz on implementing kd tree
+/* \author Stefan Sicklinger */
+// 3d Tree
 
 #include "render/render.h"
+
 
 // Structure to represent node of kd tree
 struct Node
@@ -34,7 +35,7 @@ struct KdTree
 		}
 		else
 		{
-			uint branch = depth % 2;
+			uint branch = depth % 3;
 			if (point[branch] < node->point[branch])
 			{
 				insert(node->left, branch + 1, point, id);
@@ -56,15 +57,17 @@ struct KdTree
 		if (node != NULL)
 		{
 
-			float leftXBound = target[0] - distanceTol;
+			float leftXBound  = target[0] - distanceTol;
 			float rightXBound = target[0] + distanceTol;
 			float upperYBound = target[1] + distanceTol;
 			float lowerYBound = target[1] - distanceTol;
+			float frontZBound = target[2] + distanceTol;
+			float rearZBound  = target[2] - distanceTol;
 
-			if ((node->point[0] > leftXBound && node->point[0] < rightXBound) && (node->point[1] > lowerYBound && node->point[1] < upperYBound))
+			if ((node->point[0] > leftXBound && node->point[0] < rightXBound) && (node->point[1] > lowerYBound && node->point[1] < upperYBound) && (node->point[2] > rearZBound && node->point[2] < frontZBound))
 			{
 				//check for point within circle
-				float distance = sqrt((target[0] - node->point[0]) * (target[0] - node->point[0]) + (target[1] - node->point[1]) * (target[1] - node->point[1]));
+				float distance = sqrt((target[0] - node->point[0]) * (target[0] - node->point[0]) + (target[1] - node->point[1]) * (target[1] - node->point[1])+ (target[2] - node->point[2]) * (target[2] - node->point[2]));
 
 				if (distanceTol > distance)
 				{ // we have a match
@@ -74,11 +77,11 @@ struct KdTree
 			}
 
 			//leverage the tree
-			if ((target[depth % 2] - distanceTol) < node->point[depth % 2])
+			if ((target[depth % 3] - distanceTol) < node->point[depth % 3])
 			{
 				search(node->left, depth + 1, target, distanceTol, ids);
 			}
-			if ((target[depth % 2] + distanceTol) > node->point[depth % 2])
+			if ((target[depth % 3] + distanceTol) > node->point[depth % 3])
 			{
 				search(node->right, depth + 1, target, distanceTol, ids);
 			}
