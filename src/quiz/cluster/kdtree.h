@@ -51,7 +51,7 @@ struct KdTree
 		insert(root, 0, point, id);
 	}
 
-	void search(Node *&node, uint depth, std::vector<float> target, float distanceTol, std::vector<int>& ids)
+	void search(Node *&node, uint depth, std::vector<float> target, float distanceTol, std::vector<int> &ids)
 	{
 		if (node != NULL)
 		{
@@ -66,10 +66,11 @@ struct KdTree
 				//check for point within circle
 				float distance = sqrt((target[0] - node->point[0]) * (target[0] - node->point[0]) + (target[1] - node->point[1]) * (target[1] - node->point[1]));
 
-				if (distanceTol >  distance){ // we have a match
+				if (distanceTol > distance)
+				{ // we have a match
 					ids.push_back(node->id);
 					//std::cout << "Node "<< node->id << "added" << std::endl;
-					}
+				}
 			}
 
 			//leverage the tree
