@@ -25,13 +25,42 @@ typename pcl::PointCloud<PointT>::Ptr ProcessPointClouds<PointT>::FilterCloud(ty
     // Time segmentation process
     auto startTime = std::chrono::steady_clock::now();
 
-    // TODO:: Fill in the function to do voxel grid point reduction and region based filtering
+    typename pcl::PointCloud<PointT>::Ptr cloudFilteredAndCorped(new pcl::PointCloud<PointT>());
+    //Fill in the function to do voxel grid point reduction and region based filtering
+    pcl::VoxelGrid<PointT> vg;
+    vg.setInputCloud(cloud);
+    vg.setLeafSize(filterRes, filterRes, filterRes);
+    vg.filter(*cloudFilteredAndCorped);
+    // Set corpbox
+    pcl::CropBox<PointT> boxFilter(true);
+    boxFilter.setMin(minPoint);
+    boxFilter.setMax(maxPoint);
+    boxFilter.setInputCloud(cloudFilteredAndCorped);
+    boxFilter.filter(*cloudFilteredAndCorped);
+    // Set corpbox
+    std::vector<int> indices;
+    pcl::CropBox<PointT> boxFilterRoof(true);
+    boxFilter.setMin(Eigen::Vector4f(-1.5, -1.7, -1.0, 1.0));
+    boxFilter.setMax(Eigen::Vector4f(2.6, 1.7, -0.4, 1.0));
+    boxFilter.setInputCloud(cloudFilteredAndCorped);
+    boxFilter.filter(indices);
+
+    pcl::PointIndices::Ptr pointsToRemove{new pcl::PointIndices};
+
+    for (int i : indices)
+        pointsToRemove->indices.push_back(i);
+
+    pcl::ExtractIndices<PointT> extract;
+    extract.setInputCloud(cloudFilteredAndCorped);
+    extract.setIndices(pointsToRemove);
+    extract.setNegative(true);
+    extract.filter(*cloudFilteredAndCorped);
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "filtering took " << elapsedTime.count() << " milliseconds" << std::endl;
 
-    return cloud;
+    return cloudFilteredAndCorped;
 }
 
 template <typename PointT>
