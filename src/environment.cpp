@@ -78,7 +78,8 @@ void simpleHighway(pcl::visualization::PCLVisualizer::Ptr &viewer)
         }
         if (renderBoxes)
         {
-            Box box = myProcessPointClouds->BoundingBox(cluster);
+          //  Box box = myProcessPointClouds->BoundingBox(cluster);
+            BoxQ box = myProcessPointClouds->BoundingBoxQ(cluster);
             renderBox(viewer, box, clusterId, colors[clusterId % colors.size()]);
         }
         ++clusterId;
