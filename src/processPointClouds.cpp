@@ -181,7 +181,8 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
     for (int index = 0; index < cloud->points.size(); index++)
     {
-        pcl::PointXYZ point = cloud->points[index];
+        PointT point;
+        point = cloud->points[index];
         if (inliersResult.count(index))
             planeCloud->points.push_back(point);
         else
@@ -239,7 +240,13 @@ void ProcessPointClouds<PointT>::clusterRecursive(int index, typename pcl::Point
     target[0] = cloud->points[index].x;
     target[1] = cloud->points[index].y;
     target[2] = cloud->points[index].z;
-    cloudCluster->points.push_back(pcl::PointXYZ(target[0], target[1], target[2]));
+    
+    PointT aPoint;
+    aPoint.x = cloud->points[index].x;
+    aPoint.y = cloud->points[index].y;
+    aPoint.z = cloud->points[index].z;
+
+    cloudCluster->points.push_back(aPoint);
     std::vector<int> nnPointsIndex = tree->search(target, distanceTol);
 
     for (int id : nnPointsIndex)
