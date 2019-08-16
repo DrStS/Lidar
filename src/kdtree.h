@@ -72,7 +72,7 @@ struct KdTree
 				if (distanceTol > distance)
 				{ // we have a match
 					ids.push_back(node->id);
-					std::cout << "Node "<< node->id << "added" << std::endl;
+					//std::cout << "Node "<< node->id << "added" << std::endl;
 				}
 			}
 

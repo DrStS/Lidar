@@ -160,7 +160,6 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
     }
 
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult(obstCloud, planeCloud);
-    std::cout << "DEBUG: cloud->points.size()" << cloud->points.size() << std::endl;
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(endTime - startTime);
     std::cout << "plane segmentation took " << elapsedTime.count() << " microseconds" << std::endl;
@@ -207,53 +206,51 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
 template <typename PointT>
 void ProcessPointClouds<PointT>::clusterRecursive(int index, typename pcl::PointCloud<PointT>::Ptr cloud, typename pcl::PointCloud<PointT>::Ptr cloudCluster, std::vector<bool> &processed, KdTree *tree, float distanceTol)
 {
-	processed[index] = true;
-    std::vector<float> target;
-    target[0]=cloud->points[index].x;
-    target[1]=cloud->points[index].y;
-    target[2]=cloud->points[index].z;
+    processed[index] = true;
+    std::vector<float> target(3);
+    target[0] = cloud->points[index].x;
+    target[1] = cloud->points[index].y;
+    target[2] = cloud->points[index].z;
 
-    cloudCluster->points.push_back(pcl::PointXYZ(target[0],target[1],target[2]));
-	std::vector<int> nnPointsIndex = tree->search(target, distanceTol);
+    cloudCluster->points.push_back(pcl::PointXYZ(target[0], target[1], target[2]));
+    std::vector<int> nnPointsIndex = tree->search(target, distanceTol);
 
-	for (int id : nnPointsIndex)
-	{
-		if (!processed[id])
-			clusterRecursive(id, cloud, cloudCluster, processed, tree, distanceTol);
-	}
+    for (int id : nnPointsIndex)
+    {
+        if (!processed[id])
+            clusterRecursive(id, cloud, cloudCluster, processed, tree, distanceTol);
+    }
 }
 
-
 template <typename PointT>
-std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::ClusteringOwn(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance)
+std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::ClusteringOwn(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
 {
     // Time clustering process
     auto startTime = std::chrono::steady_clock::now();
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
     // Create own KD Tree
     KdTree *ThreeDtree = new KdTree;
-    for (int i = 0; i < cloud->points.size(); i++){
-        std::vector<float> target;
-        target[0]=cloud->points[i].x;
-        target[1]=cloud->points[i].y;
-        target[2]=cloud->points[i].z;
-        std::cout << "DEBUG1 " << i << std::endl;
+    for (int i = 0; i < cloud->points.size(); i++)
+    {
+        std::vector<float> target(3);
+        target[0] = cloud->points[i].x;
+        target[1] = cloud->points[i].y;
+        target[2] = cloud->points[i].z;
         ThreeDtree->insert(target, i);
-        std::cout << "DEBUG2 " << i << std::endl;
     }
-		
 
-	std::vector<bool> processed(cloud->points.size(), false);
+    std::vector<bool> processed(cloud->points.size(), false);
 
-	for (int i; i < cloud->points.size(); i++)
-	{
-		if (!processed[i])
-		{
-			pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCluster(new pcl::PointCloud<pcl::PointXYZ>());
-			clusterRecursive(i, cloud, cloudCluster, processed, ThreeDtree, clusterTolerance);
-			clusters.push_back(cloudCluster);
-		}
-	}
+    for (int i; i < cloud->points.size(); i++)
+    {
+        if (!processed[i])
+        {
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCluster(new pcl::PointCloud<pcl::PointXYZ>());
+            clusterRecursive(i, cloud, cloudCluster, processed, ThreeDtree, clusterTolerance);
+            if (cloudCluster->points.size() >= minSize && cloudCluster->points.size() <= maxSize)
+                clusters.push_back(cloudCluster);
+        }
+    }
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters.size() << " clusters" << std::endl;
