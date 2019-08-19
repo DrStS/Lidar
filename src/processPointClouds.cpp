@@ -225,7 +225,6 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
         cloud_cluster->is_dense = true;
         clusters.push_back(cloud_cluster);
     }
-
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters.size() << " clusters" << std::endl;
@@ -272,9 +271,7 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> ProcessPointClouds<PointT>::C
         target[2] = cloud->points[i].z;
         ThreeDtree->insert(target, i);
     }
-
     std::vector<bool> processed(cloud->points.size(), false);
-
     for (int i; i < cloud->points.size(); i++)
     {
         if (!processed[i])
