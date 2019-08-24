@@ -1,6 +1,7 @@
-# Sensor Fusion Self-Driving Car Course
+# Sensor Fusion Self-Driving Car Course - my final code
 
-<img src="https://github.com/awbrown90/SensorFusionHighway/blob/master/media/ObstacleDetectionFPS.gif" width="700" height="400" />
+<img src="examples/data2.gif" width="700" height="400" />
+
 
 ### Welcome to the Sensor Fusion course for self-driving cars.
 
